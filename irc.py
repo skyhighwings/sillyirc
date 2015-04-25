@@ -144,7 +144,6 @@ class Server:
         self.send_line(' '.join(["PONG", ' '.join(msg.args)]))
 
     def handle_privmsg(self, msg):
-        self.send_line("PRIVMSG #sillybot :I got a message! :D")
         pass
 
     def handle_register(self, msg):
