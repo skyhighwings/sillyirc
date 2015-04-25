@@ -1,6 +1,7 @@
 # IRC utility functions module
 
 from collections import namedtuple
+import queue
 import socket
 import select
 import irc
@@ -68,6 +69,9 @@ class Server:
         self.autojoin_channels = autojoin_channels
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self.tmp_buf = u''
+        self.sendq = queue.Queue()
+
         self.handlers = {
             "PRIVMSG": self.handle_privmsg,
             "PING": self.handle_ping,
@@ -81,15 +85,34 @@ class Server:
 
         # This is obviously not working. Why?
         while True:
-            (r, w, x) = select.select([self.sock], [self.sock], [self.sock])
-            if(r):
-                line = self.sock.recv(512)
-                self.receive_line(line)
+            (r,_, x) = select.select([self.sock], [], [self.sock], 0.5)
+            (_,w,_) = select.select([], [self.sock], [], 0)
+
+            if len(r) > 0:
+                data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'').decode('utf-8')
+                lines = data.split("\n")
+                self.tmp_buf = lines[-1]
+
+                for line in lines[:-1]:
+                    self.receive_line(line)
+
+            if len(w) > 0:
+                try:
+                    line = self.sendq.get(False)
+
+                    print("{server} <-- {line}".format(server=self.name, line=line))
+                    self.sock.send(line.encode('utf-8') + b'\r\n')
+                except queue.Empty:
+                    pass
+
+            if len(x) > 0:
+                break
+
+        print("ended")
+
 
     def send_line(self, line):
-        print("{server} <-- {line}".format(server=self.name, line=line))
-        # TODO: check the number of bytes returned from this
-        self.sock.send(line)
+        self.sendq.put(line)
 
     def receive_line(self, line):
         print("{server} --> {line}".format(server=self.name, line=line))
@@ -101,7 +124,7 @@ class Server:
         self.send_line(' '.join(["PONG", ' '.join(msg.args)]))
 
     def handle_privmsg(self, msg):
-        self.send_line("PRIVMSG #a-f :I got a message! :D")
+        self.send_line("PRIVMSG #sillybot :I got a message! :D")
         pass
 
     def handle_register(self, msg):
