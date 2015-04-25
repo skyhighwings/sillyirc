@@ -7,8 +7,10 @@ import select
 import irc
 import time
 
+
 class NotConnectedException(Exception):
     pass
+
 
 # Adapted from Tarn's message parser (https://github.com/aerdan/tarn)
 class Message(namedtuple("Message", ["tags", "source", "verb", "args"])):
@@ -62,7 +64,15 @@ class Server:
     """The representation of a server -- an abstraction from having to deal
     with raw sockets from the main loop."""
 
-    def __init__(self, name, address, port, ssl, nick, user, realname, autojoin_channels):
+    def __init__(self,
+                 name,
+                 address,
+                 port,
+                 ssl,
+                 nick,
+                 user,
+                 realname,
+                 autojoin_channels):
         self.name = name
         self.address = address
         self.port = port
@@ -85,7 +95,8 @@ class Server:
         self.sock.connect((self.address, self.port))
 
         self.send_line("NICK {nick}".format(nick=self.nick))
-        self.send_line("USER {user} * * :{realname}".format(user=self.user, realname=self.realname))
+        self.send_line("USER {user} * * :{realname}"
+                       .format(user=self.user, realname=self.realname))
         self.last_sent = time.time()
 
 
@@ -106,7 +117,8 @@ class Server:
                 if time.time() - self.last_sent > 1:
                     line = self.sendq.get(False)
 
-                    print("{server} <-- {line}".format(server=self.name, line=line))
+                    print("{server} <-- {line}".format(server=self.name,
+                                                       line=line))
                     self.sock.send(line.encode('utf-8') + b'\r\n')
 
                     self.last_sent = time.time()
@@ -115,7 +127,6 @@ class Server:
 
         if len(x) > 0:
             raise irc.NotConnectedException()
-
 
     def send_line(self, line):
         self.sendq.put(line)
@@ -139,4 +150,3 @@ class Server:
 
     def default_handler(self, msg):
         pass
-
