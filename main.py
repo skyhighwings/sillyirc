@@ -28,10 +28,10 @@ def main():
     while True:
         for server in srvs:
             try:
-                server.process()
+                if server.should_process():
+                    server.process()
             except irc.NotConnectedException:
                 srvs.remove(server)
-
 
 if __name__ == '__main__':
     main()

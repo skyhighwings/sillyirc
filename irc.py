@@ -99,10 +99,13 @@ class Server:
                        .format(user=self.user, realname=self.realname))
         self.last_sent = time.time()
 
+    def should_process(self):
+        (r, _, x) = select.select([self.sock], [], [self.sock], 0.1)
+        return self.sendq.qsize() > 0 or r
 
     def process(self):
-        (r,_, x) = select.select([self.sock], [], [self.sock], 0)
-        (_,w,_) = select.select([], [self.sock], [], 0)
+        (r, _, x) = select.select([self.sock], [], [self.sock], 0)
+        (_, w, _) = select.select([], [self.sock], [], 0)
 
         if len(r) > 0:
             data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'')
