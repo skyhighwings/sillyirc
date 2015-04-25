@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 
 import socket
+import irc
 
 # TODO: config file!
 servers = [
-        {
-            "name": "ponychat",
-            "address": "irc.ponychat.net",
-            "port": 6697,
-            "ssl": True,
-            "autojoin_channels": [
-                "#geek"
-                ]
-        }
+    {
+        "name": "ponychat",
+        "address": "irc.ponychat.net",
+        "port": 6697,
+        "ssl": True,
+        "autojoin_channels": [
+            "#geek"
         ]
+    }
+]
 
 
 class Server:
