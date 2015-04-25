@@ -13,7 +13,7 @@ servers = [
         "user": "sillybot",
         "realname": "sillybot by rylee",
         "autojoin_channels": [
-            "#geek"
+            "#sillybot"
         ]
     }
 ]
