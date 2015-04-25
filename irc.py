@@ -5,6 +5,7 @@ import queue
 import socket
 import select
 import irc
+import time
 
 # Adapted from Tarn's message parser (https://github.com/aerdan/tarn)
 class Message(namedtuple("Message", ["tags", "source", "verb", "args"])):
@@ -82,6 +83,8 @@ class Server:
 
         self.send_line("NICK {nick}".format(nick=self.nick))
         self.send_line("USER {user} * * :{realname}".format(user=self.user, realname=self.realname))
+        last_sent = time.time()
+
 
         while True:
             (r,_, x) = select.select([self.sock], [], [self.sock], 0.5)
@@ -97,10 +100,13 @@ class Server:
 
             if len(w) > 0:
                 try:
-                    line = self.sendq.get(False)
+                    if time.time() - last_sent > 1:
+                        line = self.sendq.get(False)
 
-                    print("{server} <-- {line}".format(server=self.name, line=line))
-                    self.sock.send(line.encode('utf-8') + b'\r\n')
+                        print("{server} <-- {line}".format(server=self.name, line=line))
+                        self.sock.send(line.encode('utf-8') + b'\r\n')
+
+                        last_sent = time.time()
                 except queue.Empty:
                     pass
 
