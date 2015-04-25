@@ -70,7 +70,7 @@ class Server:
         self.autojoin_channels = autojoin_channels
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.tmp_buf = u''
+        self.tmp_buf = b''
         self.sendq = queue.Queue()
 
         self.handlers = {
@@ -91,12 +91,12 @@ class Server:
             (_,w,_) = select.select([], [self.sock], [], 0)
 
             if len(r) > 0:
-                data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'').decode('utf-8')
-                lines = data.split("\n")
+                data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'')
+                lines = data.split(b'\n')
                 self.tmp_buf = lines[-1]
 
                 for line in lines[:-1]:
-                    self.receive_line(line)
+                    self.receive_line(line.decode('utf-8'))
 
             if len(w) > 0:
                 try:
