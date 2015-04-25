@@ -7,6 +7,9 @@ import select
 import irc
 import time
 
+class NotConnectedException(Exception):
+    pass
+
 # Adapted from Tarn's message parser (https://github.com/aerdan/tarn)
 class Message(namedtuple("Message", ["tags", "source", "verb", "args"])):
     """
@@ -83,37 +86,35 @@ class Server:
 
         self.send_line("NICK {nick}".format(nick=self.nick))
         self.send_line("USER {user} * * :{realname}".format(user=self.user, realname=self.realname))
-        last_sent = time.time()
+        self.last_sent = time.time()
 
 
-        while True:
-            (r,_, x) = select.select([self.sock], [], [self.sock], 0.5)
-            (_,w,_) = select.select([], [self.sock], [], 0)
+    def process(self):
+        (r,_, x) = select.select([self.sock], [], [self.sock], 0)
+        (_,w,_) = select.select([], [self.sock], [], 0)
 
-            if len(r) > 0:
-                data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'')
-                lines = data.split(b'\n')
-                self.tmp_buf = lines[-1]
+        if len(r) > 0:
+            data = self.tmp_buf + self.sock.recv(512).replace(b'\r', b'')
+            lines = data.split(b'\n')
+            self.tmp_buf = lines[-1]
 
-                for line in lines[:-1]:
-                    self.receive_line(line.decode('utf-8'))
+            for line in lines[:-1]:
+                self.receive_line(line.decode('utf-8'))
 
-            if len(w) > 0:
-                try:
-                    if time.time() - last_sent > 1:
-                        line = self.sendq.get(False)
+        if len(w) > 0:
+            try:
+                if time.time() - self.last_sent > 1:
+                    line = self.sendq.get(False)
 
-                        print("{server} <-- {line}".format(server=self.name, line=line))
-                        self.sock.send(line.encode('utf-8') + b'\r\n')
+                    print("{server} <-- {line}".format(server=self.name, line=line))
+                    self.sock.send(line.encode('utf-8') + b'\r\n')
 
-                        last_sent = time.time()
-                except queue.Empty:
-                    pass
+                    self.last_sent = time.time()
+            except queue.Empty:
+                pass
 
-            if len(x) > 0:
-                break
-
-        print("ended")
+        if len(x) > 0:
+            raise irc.NotConnectedException()
 
 
     def send_line(self, line):

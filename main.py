@@ -25,6 +25,13 @@ def main():
     for server in servers:
         srvs.append(irc.Server(**server))
 
+    while True:
+        for server in srvs:
+            try:
+                server.process()
+            except irc.NotConnectedException:
+                srvs.remove(server)
+
 
 if __name__ == '__main__':
     main()
