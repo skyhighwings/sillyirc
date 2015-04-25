@@ -83,7 +83,6 @@ class Server:
         self.send_line("NICK {nick}".format(nick=self.nick))
         self.send_line("USER {user} * * :{realname}".format(user=self.user, realname=self.realname))
 
-        # This is obviously not working. Why?
         while True:
             (r,_, x) = select.select([self.sock], [], [self.sock], 0.5)
             (_,w,_) = select.select([], [self.sock], [], 0)
