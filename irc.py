@@ -36,6 +36,7 @@ class Message(namedtuple("Message", ["tags", "source", "verb", "args"])):
             for tag in tags:
                 if "=" in tag:
                     key, val = tag.split("=", 1)
+
                 else:
                     key, val = tag, True
 
